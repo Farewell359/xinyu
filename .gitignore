@@ -1,0 +1,20 @@
+# 密钥与用户数据 —— 绝不上传
+data/config.json
+data/xinyu.db
+data/*.db
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# 机器学习训练产物
+*.pt
+*.bin
+output/
+results/
+
+# 编辑器/系统
+.DS_Store
+Thumbs.db
+*.log

@@ -1,0 +1,7 @@
+# 训练环境依赖（可选）
+# 只有运行 train.py 做 RoBERTa 微调时才需要；运行 app.py 本身零依赖。
+torch>=2.2
+transformers>=4.40
+datasets>=2.18
+accelerate>=0.30
+scikit-learn>=1.3
