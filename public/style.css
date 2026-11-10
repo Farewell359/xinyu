@@ -338,7 +338,7 @@ textarea{font:inherit}
 /* ---------------- 底部导航 ---------------- */
 .tabbar{
   position:relative;z-index:6;flex:0 0 auto;
-  display:grid;grid-template-columns:repeat(4,1fr);
+  display:grid;grid-template-columns:repeat(5,1fr);
   padding:7px 10px calc(9px + env(safe-area-inset-bottom));
   background:rgba(253,251,247,.92);backdrop-filter:blur(14px);
   border-top:1px solid var(--line);
@@ -531,3 +531,65 @@ textarea{font:inherit}
   .inspector{width:270px;right:12px;bottom:12px}
   .stage{gap:28px;padding:24px 16px}
 }
+
+/* ---------------- 心情补给 ---------------- */
+.rx-card{background:linear-gradient(150deg,#FDF3E3,#FAEEDB)}
+.rx-tier{margin:2px 0 6px;font-size:11px;letter-spacing:.1em;color:var(--amber);font-weight:600}
+.rx-intro{margin:0 0 14px;font-size:12.5px;line-height:1.85;color:var(--ink-2)}
+.rx-group{margin-bottom:14px}
+.rx-group-h{display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:11.5px;color:var(--ink-3);letter-spacing:.06em}
+.rx-group-h b{color:var(--green);font-size:12px}
+.rx-item{padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.75);
+  border:1px solid rgba(47,93,80,.08);margin-bottom:8px}
+.rx-item b{display:block;font-size:13px;color:var(--ink);margin-bottom:3px}
+.rx-item p{margin:0;font-size:12px;line-height:1.75;color:var(--ink-2)}
+.rx-meta{margin-top:6px;font-size:10.5px;color:var(--ink-3)}
+.rx-meta em{font-style:normal;color:var(--amber)}
+.game-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.game-tile{display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 6px 12px;
+  border-radius:14px;background:#fff;border:1px solid var(--line);cursor:pointer;transition:.16s;font-family:inherit}
+.game-tile:active{transform:scale(.96)}
+.game-tile .g-ico{font-size:22px;color:var(--green);line-height:1}
+.game-tile b{font-size:12px;color:var(--ink)}
+.game-tile i{font-style:normal;font-size:10px;color:var(--ink-3);text-align:center;line-height:1.5}
+
+/* ---- 呼吸练习 ---- */
+.breath-stage{display:flex;flex-direction:column;align-items:center;padding:10px 0 4px}
+.breath-circle{width:150px;height:150px;border-radius:50%;margin:18px 0;
+  background:radial-gradient(circle at 40% 35%,#7FB8A4,#37655A);
+  box-shadow:0 10px 40px rgba(47,93,80,.35);
+  transition:transform 4s cubic-bezier(.4,0,.6,1),box-shadow 4s;display:flex;align-items:center;justify-content:center}
+.breath-circle span{color:#F4F1E8;font-size:14px;letter-spacing:.2em;opacity:.9}
+.breath-circle.grow{transform:scale(1.32)}
+.breath-phase{font-size:14px;color:var(--ink);font-weight:600;letter-spacing:.1em;min-height:22px}
+.breath-count{font-size:26px;color:var(--green);font-weight:650;min-height:34px}
+.breath-note{margin:6px 0 0;font-size:11.5px;color:var(--ink-3);text-align:center;line-height:1.7}
+
+/* ---- 捏泡泡 ---- */
+.pop-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;padding:6px 2px}
+.pop{aspect-ratio:1;border-radius:50%;cursor:pointer;position:relative;
+  background:radial-gradient(circle at 35% 30%,#ffffffcc 0 18%,#CFE5DB 40%,#A8CCC0 100%);
+  box-shadow:inset -3px -4px 6px rgba(47,93,80,.18),0 1px 2px rgba(0,0,0,.06);
+  transition:transform .08s}
+.pop:active{transform:scale(.88)}
+.pop.done{background:radial-gradient(circle at 50% 50%,#EDE7DA 55%,#DDD5C4 100%);
+  box-shadow:inset 0 2px 4px rgba(120,110,90,.25);transform:scale(.82);cursor:default}
+.pop.done::after{content:"";position:absolute;left:32%;top:36%;width:36%;height:28%;
+  border-radius:50%;background:rgba(255,255,255,.9);transform:rotate(20deg) scale(.8,.6)}
+.pop-hud{display:flex;justify-content:space-between;align-items:center;margin:10px 2px 0;font-size:12px;color:var(--ink-3)}
+.pop-hud b{color:var(--green);font-size:16px}
+
+/* ---- 涂鸦 ---- */
+.doodle-wrap{position:relative;border-radius:14px;overflow:hidden;background:#FFFDF8;border:1px solid var(--line)}
+#doodleCv{display:block;width:100%;touch-action:none;cursor:crosshair}
+.doodle-tools{display:flex;gap:8px;margin-top:10px;align-items:center}
+.d-color{width:26px;height:26px;border-radius:50%;border:2px solid transparent;cursor:pointer;flex:0 0 auto}
+.d-color.on{border-color:var(--ink);transform:scale(1.12)}
+.doodle-rip{position:absolute;inset:0;pointer-events:none;opacity:0}
+.doodle-rip.play{animation:rip .9s ease forwards}
+@keyframes rip{
+  0%{opacity:0;clip-path:polygon(0 0,100% 0,100% 100%,0 100%)}
+  30%{opacity:1;clip-path:polygon(0 0,100% 0,100% 100%,0 100%)}
+  100%{opacity:0;clip-path:polygon(46% 42%,54% 40%,58% 50%,50% 58%,44% 50%)}
+}
+.doodle-done{margin:10px 0 0;font-size:11.5px;color:var(--ink-3);text-align:center}

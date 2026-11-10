@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#F7F4EF">
 <title>心屿 XINYU · 愿每一句没说出口的话，都有地方安放</title>
-<link rel="stylesheet" href="/style.css?v=20261103b">
+<link rel="stylesheet" href="/style.css?v=20261110a">
 </head>
 <body>
 <div class="stage">
@@ -142,6 +142,48 @@
         </div>
       </section>
 
+      <!-- ---- 心情补给 ---- -->
+      <section class="view" id="view-kit">
+        <div class="scroll-pad">
+          <div class="card rx-card">
+            <div class="card-head">
+              <h3>今日心情处方</h3>
+              <button class="text-btn" id="btnRxNew">换一批 →</button>
+            </div>
+            <p class="rx-tier" id="rxTier"></p>
+            <p class="rx-intro" id="rxIntro"></p>
+            <div id="rxBody" class="rx-body"></div>
+            <p class="tiny" id="rxSource"></p>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><h3>两分钟小游戏</h3><span class="hint">不评分 · 不排名</span></div>
+            <div class="game-grid">
+              <button class="game-tile" data-game="breath">
+                <span class="g-ico">◎</span>
+                <b>呼吸练习</b>
+                <i>跟着圆圈的节奏，三轮就够</i>
+              </button>
+              <button class="game-tile" data-game="pop">
+                <span class="g-ico">◯</span>
+                <b>捏泡泡</b>
+                <i>没有目的，就是戳破它</i>
+              </button>
+              <button class="game-tile" data-game="doodle">
+                <span class="g-ico">✎</span>
+                <b>涂鸦撕掉</b>
+                <i>画出来，然后看着它碎掉</i>
+              </button>
+            </div>
+          </div>
+
+          <div class="card notice-card">
+            <h3>为什么是这些小事</h3>
+            <p>这个模块的依据是行为激活（Behavioral Activation）：情绪低的时候，"等有心情了再做"是个陷阱——反过来，先做一个门槛极低的小动作，情绪会跟着行动走。所以这里的每件事都满足：今天能做、成本很低、有明确的第一步。</p>
+          </div>
+        </div>
+      </section>
+
       <!-- ---- 设置 / 数据 ---- -->
       <section class="view" id="view-setting">
         <div class="scroll-pad">
@@ -223,6 +265,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3v2M5 6l1.4 1.4M19 6l-1.4 1.4M4 13h2M18 13h2" stroke-linecap="round"/><path d="M12 8a5 5 0 0 0-3 9v2h6v-2a5 5 0 0 0-3-9Z" stroke-linejoin="round"/></svg>
         <span>暖光</span>
       </button>
+      <button class="tab" data-view="kit">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 21s-7.5-4.6-9.3-9C1.3 8.4 3.4 5 6.8 5c2 0 3.4 1.1 4.2 2.4l1 1.6 1-1.6C13.8 6.1 15.2 5 17.2 5c3.4 0 5.5 3.4 4.1 7-1.8 4.4-9.3 9-9.3 9Z" stroke-linejoin="round"/></svg>
+        <span>补给</span>
+      </button>
       <button class="tab" data-view="setting">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5" stroke-linecap="round"/></svg>
         <span>我的</span>
@@ -232,6 +278,17 @@
     <!-- =============== 暖光弹层 =============== -->
     <div class="sheet-mask" id="warmSheet">
       <div class="sheet" id="warmSheetBody"></div>
+    </div>
+
+    <!-- =============== 小游戏弹层 =============== -->
+    <div class="sheet-mask" id="gameSheet">
+      <div class="sheet">
+        <div class="sheet-grab"></div>
+        <div id="gameBody"></div>
+        <div class="row-btns" style="margin-top:14px">
+          <button class="btn ghost" id="btnGameClose">收起来</button>
+        </div>
+      </div>
     </div>
 
     <!-- 周报 -->
@@ -282,6 +339,6 @@
   <div class="ins-foot" id="insFoot"></div>
 </div>
 
-<script src="/app.js?v=20261109a"></script>
+<script src="/app.js?v=20261110a"></script>
 </body>
 </html>

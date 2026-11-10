@@ -40,6 +40,7 @@ import ai
 import engine
 import knowledge
 import llm
+import moodkit
 import responder
 import store
 
@@ -199,6 +200,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(self._weekly(conn, uid))
             if path == "/api/alerts":
                 return self._json({"alerts": store.pending_alerts(conn, uid)})
+            if path == "/api/moodkit":
+                return self._json(self._moodkit(conn, uid, qs))
             return self._json({"error": "not found"}, 404)
         finally:
             conn.close()
@@ -510,6 +513,17 @@ class Handler(BaseHTTPRequestHandler):
             pass
         self._sse_open = False
 
+    # ---- 心情补给（行为激活处方）----
+    def _moodkit(self, conn, uid: str, qs: dict) -> dict:
+        prof = store.profile(conn, uid)
+        points = prof.get("points") or []
+        # 最近一次的风险等级：没有记录就当作 L0
+        latest_risk = points[-1]["risk_level"] if points else "L0"
+        avg = (prof.get("summary") or {}).get("avg")
+        # "换一批"：用时间戳做种子，避免每次刷新都变
+        seed = int(qs.get("seed", ["0"])[0]) or None
+        return moodkit.prescription(avg, latest_risk, seed)
+
     # ---- 周报（AI 撰写 + 规则统计）----
     def _weekly(self, conn, uid: str) -> dict:
         base = store.weekly_report(conn, uid)
@@ -540,7 +554,7 @@ class Handler(BaseHTTPRequestHandler):
 def main():
     ap = argparse.ArgumentParser(description="心屿 XINYU · AI 心理树洞与情绪预警")
     ap.add_argument("--port", type=int, default=int(os.environ.get("PORT", 8848)))
-    ap.add_argument("--host", default="127.0.0.1")
+    ap.add_argument("--host", default=os.environ.get("HOST", "0.0.0.0"))
     args = ap.parse_args()
 
     store.connect().close()

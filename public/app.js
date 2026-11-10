@@ -83,6 +83,10 @@ async function boot() {
   await loadAlerts();
   await loadSettings();
   checkOpeningSheet();
+
+  // 直达某个页面：地址带 #profile / #kit 等
+  const h = (location.hash || "").replace("#", "");
+  if (h && TITLES[h] && h !== "chat") switchView(h);
 }
 
 /* ---------------- AI 状态 ---------------- */
@@ -140,6 +144,7 @@ const TITLES = {
   chat: ["匿名树洞", "不评判 · 不传出去 · 无需真名"],
   profile: ["情绪档案", "一条曲线，比任何一次对话都诚实"],
   warm: ["暖光预警", "只在需要的时候，轻轻敲一下门"],
+  kit: ["心情补给", "走走 · 吃点 · 玩两分钟"],
   setting: ["我的", "匿名身份 · 引擎状态 · 数据边界"],
 };
 
@@ -150,6 +155,7 @@ function switchView(name) {
   $("#pageSub").textContent = TITLES[name][1];
   if (name === "profile") loadProfile();
   if (name === "warm") loadAlerts();
+  if (name === "kit") loadKit();
   if (name === "setting") loadSettings();
 }
 $$(".tab").forEach((t) => t.addEventListener("click", () => switchView(t.dataset.view)));
@@ -984,6 +990,203 @@ function updateInspector(r) {
   } else {
     foot.classList.remove("show");
   }
+}
+
+/* ================= 心情补给 ================= */
+let rxSeed = 0;
+let breathTimer = null;   // 呼吸练习计时器，关弹层时必须清掉
+
+async function loadKit(newBatch) {
+  const seed = newBatch ? (rxSeed = Date.now() % 100000) : rxSeed;
+  try {
+    const d = await api(`/api/moodkit?uid=${state.uid}${seed ? `&seed=${seed}` : ""}`);
+    renderRx(d);
+  } catch (e) {
+    $("#rxIntro").textContent = "补给站暂时没加载出来，稍后再试试。";
+  }
+}
+
+function renderRx(d) {
+  $("#rxTier").textContent = d.hint || "";
+  $("#rxIntro").textContent = d.intro || "";
+  $("#rxSource").textContent = d.source ? `依据：${d.source}` : "";
+  const body = $("#rxBody");
+
+  if (d.mode === "crisis") {
+    body.innerHTML = `<div class="rx-item" style="border-color:rgba(194,91,78,.25)">
+      <b>先照顾安全</b><p>${esc(d.intro)}</p>
+      <p class="rx-meta" style="margin-top:8px"><em>暖光页有 24 小时热线 →></em></p></div>`;
+    return;
+  }
+
+  const grp = (icon, name, items) => !items || !items.length ? "" : `
+    <div class="rx-group">
+      <div class="rx-group-h">${icon} <b>${name}</b></div>
+      ${items.map((it) => `
+        <div class="rx-item">
+          <b>${esc(it.title)}</b>
+          <p>${esc(it.desc)}</p>
+          <p class="rx-meta">${esc(it.mins)} · 门槛 ${"·".repeat(it.effort || 1)}</p>
+        </div>`).join("")}
+    </div>`;
+
+  body.innerHTML = grp("🚶", "出去走走", d.walks) + grp("🍜", "吃点好的", d.eats) +
+                   grp("🌱", "做件小事", d.dos) + grp("🎮", "玩两分钟", d.games);
+}
+
+$("#btnRxNew").addEventListener("click", () => loadKit(true));
+
+/* ---- 小游戏 ---- */
+$$(".game-tile").forEach((t) => t.addEventListener("click", () => openGame(t.dataset.game)));
+$("#btnGameClose").addEventListener("click", closeGame);
+$$("#gameSheet").forEach((m) => m.addEventListener("click", (e) => { if (e.target === m) closeGame(); }));
+
+function closeGame() {
+  if (breathTimer) { clearInterval(breathTimer); breathTimer = null; }
+  $("#gameSheet").classList.remove("open");
+}
+
+function openGame(id) {
+  const body = $("#gameBody");
+  if (id === "breath") renderBreath(body);
+  if (id === "pop") renderPop(body);
+  if (id === "doodle") renderDoodle(body);
+  $("#gameSheet").classList.add("open");
+}
+
+/* -- 呼吸练习：4-4-4-4 箱式呼吸，三轮 -- */
+function renderBreath(body) {
+  body.innerHTML = `
+    <p class="sheet-kicker">BOX BREATHING</p>
+    <h3 class="sheet-title">呼吸练习</h3>
+    <div class="breath-stage">
+      <div class="breath-phase" id="brPhase">准备好了就开始</div>
+      <div class="breath-circle" id="brCircle"><span>呼吸</span></div>
+      <div class="breath-count" id="brCount">—</div>
+    </div>
+    <div class="row-btns">
+      <button class="btn primary inline" id="brStart">开始三轮</button>
+    </div>
+    <p class="breath-note">吸 4 秒 · 屏住 4 秒 · 呼 4 秒 · 停 4 秒。<br/>跟着圆圈放大缩小，走神了也没关系，回来接着数。</p>`;
+  $("#brStart").addEventListener("click", startBreath);
+}
+
+function startBreath() {
+  if (breathTimer) { clearInterval(breathTimer); breathTimer = null; }
+  const phases = [["吸气", 4, true], ["屏住", 4, true], ["呼气", 4, false], ["停顿", 4, false]];
+  const circle = $("#brCircle"), phaseEl = $("#brPhase"), countEl = $("#brCount");
+  let round = 0, pi = 0, sec = 0;
+  const btn = $("#brStart"); btn.disabled = true; btn.textContent = "进行中…";
+
+  circle.classList.remove("grow");
+  function applyGrow() { circle.classList.toggle("grow", phases[pi][2]); }
+  phaseEl.textContent = `第 ${round + 1} 轮 · ${phases[pi][0]}`;
+  countEl.textContent = 4;
+  applyGrow();
+
+  breathTimer = setInterval(() => {
+    sec++;
+    if (sec < 4) { countEl.textContent = 4 - sec; return; }
+    sec = 0; pi++;
+    if (pi >= phases.length) {
+      pi = 0; round++;
+      if (round >= 3) {
+        clearInterval(breathTimer); breathTimer = null;
+        phaseEl.textContent = "完成 ✓"; countEl.textContent = "3";
+        circle.classList.remove("grow");
+        $("#brCircle").querySelector("span").textContent = "好些了吗";
+        btn.disabled = false; btn.textContent = "再来三轮";
+        return;
+      }
+    }
+    phaseEl.textContent = `第 ${round + 1} 轮 · ${phases[pi][0]}`;
+    countEl.textContent = 4;
+    applyGrow();
+  }, 1000);
+}
+
+/* -- 捏泡泡 -- */
+function renderPop(body) {
+  const COLORS = ["#7FB8A4", "#A8CCC0", "#E8C87F", "#D9A28C"];
+  body.innerHTML = `
+    <p class="sheet-kicker">NO SCORE · NO GOAL</p>
+    <h3 class="sheet-title">捏泡泡</h3>
+    <div class="pop-grid" id="popGrid"></div>
+    <div class="pop-hud">
+      <span>已捏破 <b id="popN">0</b> 个</span>
+      <button class="text-btn" id="popNew">再来一排 →</button>
+    </div>
+    <p class="breath-note">就是戳破它们。全部戳完会有点空，再来一排就好。</p>`;
+
+  let n = 0;
+  const grid = $("#popGrid");
+  function build() {
+    grid.innerHTML = "";
+    for (let i = 0; i < 18; i++) {
+      const b = document.createElement("div");
+      b.className = "pop";
+      b.style.background = `radial-gradient(circle at 35% 30%, #ffffffcc 0 18%, ${COLORS[i % COLORS.length]} 70%)`;
+      b.addEventListener("click", () => {
+        if (b.classList.contains("done")) return;
+        b.classList.add("done");
+        $("#popN").textContent = ++n;
+      });
+      grid.appendChild(b);
+    }
+  }
+  build();
+  $("#popNew").addEventListener("click", build);
+}
+
+/* -- 涂鸦撕掉 -- */
+function renderDoodle(body) {
+  body.innerHTML = `
+    <p class="sheet-kicker">DRAW & LET GO</p>
+    <h3 class="sheet-title">涂鸦，然后撕掉</h3>
+    <div class="doodle-wrap">
+      <canvas id="doodleCv" width="600" height="400"></canvas>
+      <div class="doodle-rip" id="doodleRip"></div>
+    </div>
+    <div class="doodle-tools">
+      <div class="d-color on" data-c="#2F5D50" style="background:#2F5D50"></div>
+      <div class="d-color" data-c="#C25B4E" style="background:#C25B4E"></div>
+      <div class="d-color" data-c="#E8C87F" style="background:#E8C87F"></div>
+      <div class="d-color" data-c="#7C8B9B" style="background:#7C8B9B"></div>
+      <button class="btn ghost inline" id="dClear" style="margin-left:auto;width:auto">清空</button>
+      <button class="btn primary inline" id="dRip" style="width:auto">撕掉它</button>
+    </div>
+    <p class="doodle-done" id="doodleDone">把现在脑子里那个感觉画出来——不用像任何东西。画完点「撕掉」。</p>`;
+
+  const cv = $("#doodleCv"), ctx = cv.getContext("2d");
+  let color = "#2F5D50", drawing = false, drew = false;
+  ctx.lineWidth = 3; ctx.lineCap = "round"; ctx.lineJoin = "round";
+  const pos = (e) => {
+    const r = cv.getBoundingClientRect();
+    const t = e.touches ? e.touches[0] : e;
+    return [(t.clientX - r.left) * cv.width / r.width, (t.clientY - r.top) * cv.height / r.height];
+  };
+  const down = (e) => { drawing = true; drew = true; ctx.strokeStyle = color; ctx.beginPath(); ctx.moveTo(...pos(e)); };
+  const move = (e) => { if (!drawing) return; e.preventDefault(); ctx.lineTo(...pos(e)); ctx.stroke(); };
+  const up = () => { drawing = false; };
+  cv.addEventListener("pointerdown", down);
+  cv.addEventListener("pointermove", move);
+  window.addEventListener("pointerup", up);
+
+  $$(".d-color").forEach((c) => c.addEventListener("click", () => {
+    $$(".d-color").forEach((x) => x.classList.remove("on"));
+    c.classList.add("on"); color = c.dataset.c;
+  }));
+
+  const clearAll = () => { ctx.clearRect(0, 0, cv.width, cv.height); drew = false; $("#doodleDone").textContent = "把现在脑子里那个感觉画出来——不用像任何东西。画完点「撕掉」。"; };
+  $("#dClear").addEventListener("click", clearAll);
+  $("#dRip").addEventListener("click", () => {
+    if (!drew) { $("#doodleDone").textContent = "先随便画点什么——一条线也行。"; return; }
+    const rip = $("#doodleRip");
+    rip.style.background = "#FFFDF8";   // 盖住画面，做"碎纸"效果
+    rip.classList.remove("play"); void rip.offsetWidth; rip.classList.add("play");
+    $("#doodleDone").textContent = "撕掉了。刚才那个感觉，现在只是纸屑。";
+    setTimeout(clearAll, 950);
+  });
 }
 
 boot();
